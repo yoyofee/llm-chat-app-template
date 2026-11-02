@@ -1,7 +1,6 @@
-
 /**
  * yoyofeeai frontend
- * Login, account session, theme and AI chat.
+ * Login, account session, theme and persistent AI chat.
  */
 
 const $ = (id) => document.getElementById(id);
@@ -22,7 +21,9 @@ const welcome = $("welcome");
 
 let currentUser = null;
 let chatHistory = [];
+let currentConversationId = null;
 let isProcessing = false;
+let isLoadingHistory = false;
 
 // 页面切换
 function showView(view) {
@@ -74,8 +75,52 @@ function applyTheme(color) {
   }
 }
 
+// 从数据库读取最近一次对话
+async function loadLatestConversation() {
+  currentConversationId = null;
+  chatHistory = [];
+  chatMessages.replaceChildren();
+  welcome.classList.remove("hidden");
+
+  const data = await api("/api/conversations");
+  const conversations = data.conversations || [];
+
+  if (conversations.length === 0) {
+    return;
+  }
+
+  const latest = conversations[0];
+  currentConversationId = latest.id;
+
+  const messageData = await api(
+    "/api/conversations/" +
+    encodeURIComponent(currentConversationId) +
+    "/messages"
+  );
+
+  const messages = messageData.messages || [];
+
+  chatHistory = messages
+    .filter((item) =>
+      (item.role === "user" || item.role === "assistant") &&
+      typeof item.content === "string"
+    )
+    .map((item) => ({
+      role: item.role,
+      content: item.content
+    }));
+
+  for (const item of chatHistory) {
+    addMessageToChat(item.role, item.content);
+  }
+
+  if (chatHistory.length > 0) {
+    welcome.classList.add("hidden");
+  }
+}
+
 // 进入聊天页面
-function enterChat(user) {
+async function enterChat(user) {
   currentUser = user;
   $("account-label").textContent = user.username || "";
 
@@ -89,11 +134,26 @@ function enterChat(user) {
 
   applyTheme(user.theme_color || savedTheme || "#10a37f");
 
-  chatHistory = [];
-  chatMessages.replaceChildren();
-  welcome.classList.remove("hidden");
-
   showView(chatView);
+
+  isLoadingHistory = true;
+  userInput.disabled = true;
+  sendButton.disabled = true;
+
+  try {
+    await loadLatestConversation();
+  } catch (error) {
+    console.error("读取聊天记录失败", error);
+    addMessageToChat(
+      "assistant",
+      "暂时无法读取历史聊天记录：" + error.message
+    );
+  } finally {
+    isLoadingHistory = false;
+    userInput.disabled = false;
+    sendButton.disabled = false;
+    userInput.focus();
+  }
 }
 
 // 检查当前登录状态
@@ -113,7 +173,7 @@ async function checkSession() {
       return;
     }
 
-    enterChat(user);
+    await enterChat(user);
   } catch (error) {
     showView(loginView);
   }
@@ -145,7 +205,7 @@ loginForm.addEventListener("submit", async (event) => {
       currentUser = data.user;
       showView(passwordView);
     } else {
-      enterChat(data.user);
+      await enterChat(data.user);
     }
   } catch (error) {
     errorBox.textContent = error.message;
@@ -240,8 +300,10 @@ $("logout-button").addEventListener("click", async () => {
   }
 
   currentUser = null;
+  currentConversationId = null;
   chatHistory = [];
   chatMessages.replaceChildren();
+
   showView(loginView);
 });
 
@@ -270,7 +332,8 @@ function addMessageToChat(role, content) {
 // 输入框自动调整高度
 userInput.addEventListener("input", () => {
   userInput.style.height = "auto";
-  userInput.style.height = Math.min(userInput.scrollHeight, 180) + "px";
+  userInput.style.height =
+    Math.min(userInput.scrollHeight, 180) + "px";
 });
 
 // Enter 发送，Shift+Enter 换行
@@ -283,30 +346,81 @@ userInput.addEventListener("keydown", (event) => {
 
 sendButton.addEventListener("click", sendMessage);
 
+// 确保当前有一个数据库对话
+async function ensureConversation(firstMessage) {
+  if (currentConversationId) {
+    return currentConversationId;
+  }
+
+  const data = await api("/api/conversations", {
+    method: "POST",
+    body: JSON.stringify({
+      title: firstMessage.slice(0, 80) || "新对话"
+    })
+  });
+
+  currentConversationId = data.conversation.id;
+
+  return currentConversationId;
+}
+
+// 保存消息到数据库
+async function saveMessage(role, content) {
+  if (!currentConversationId) {
+    throw new Error("当前对话尚未创建");
+  }
+
+  return api(
+    "/api/conversations/" +
+    encodeURIComponent(currentConversationId) +
+    "/messages",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        role,
+        content
+      })
+    }
+  );
+}
+
 // 发送聊天消息
 async function sendMessage() {
   const message = userInput.value.trim();
 
-  if (!message || isProcessing || !currentUser) return;
+  if (
+    !message ||
+    isProcessing ||
+    isLoadingHistory ||
+    !currentUser
+  ) {
+    return;
+  }
 
   isProcessing = true;
   userInput.disabled = true;
   sendButton.disabled = true;
 
-  addMessageToChat("user", message);
   userInput.value = "";
   userInput.style.height = "auto";
-
-  chatHistory.push({
-    role: "user",
-    content: message
-  });
 
   typingIndicator.classList.add("visible");
 
   let assistantText = "";
 
   try {
+    // 创建对话并先保存用户消息
+    await ensureConversation(message);
+    await saveMessage("user", message);
+
+    addMessageToChat("user", message);
+
+    chatHistory.push({
+      role: "user",
+      content: message
+    });
+
+    // 请求 AI
     const response = await fetch("/api/chat", {
       method: "POST",
       credentials: "same-origin",
@@ -347,41 +461,37 @@ async function sendMessage() {
     const decoder = new TextDecoder();
     let buffer = "";
 
-    function processEvents(text) {
-      const events = text.split("\n\n");
+    function processEvent(eventText) {
+      const lines = eventText.split("\n");
 
-      for (const event of events) {
-        const lines = event.split("\n");
+      for (const line of lines) {
+        if (!line.startsWith("data:")) continue;
 
-        for (const line of lines) {
-          if (!line.startsWith("data:")) continue;
+        const data = line.slice(5).trim();
 
-          const data = line.slice(5).trim();
+        if (!data || data === "[DONE]") continue;
 
-          if (!data || data === "[DONE]") continue;
+        try {
+          const json = JSON.parse(data);
+          let content = "";
 
-          try {
-            const json = JSON.parse(data);
-            let content = "";
-
-            if (typeof json.response === "string") {
-              content = json.response;
-            } else if (
-              json.choices &&
-              json.choices[0] &&
-              json.choices[0].delta
-            ) {
-              content = json.choices[0].delta.content || "";
-            }
-
-            if (content) {
-              assistantText += content;
-              assistantElement.textContent = assistantText;
-              chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
-          } catch (error) {
-            console.warn("解析 AI 回复失败", error);
+          if (typeof json.response === "string") {
+            content = json.response;
+          } else if (
+            json.choices &&
+            json.choices[0] &&
+            json.choices[0].delta
+          ) {
+            content = json.choices[0].delta.content || "";
           }
+
+          if (content) {
+            assistantText += content;
+            assistantElement.textContent = assistantText;
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          }
+        } catch (error) {
+          console.warn("解析 AI 回复失败", error);
         }
       }
     }
@@ -403,24 +513,28 @@ async function sendMessage() {
       let index;
 
       while ((index = buffer.indexOf("\n\n")) !== -1) {
-        const event = buffer.slice(0, index);
+        const eventText = buffer.slice(0, index);
         buffer = buffer.slice(index + 2);
-        processEvents(event);
+        processEvent(eventText);
       }
     }
 
     if (buffer.trim()) {
-      processEvents(buffer);
+      processEvent(buffer);
     }
 
+    // 保存 AI 回复
     if (assistantText) {
       chatHistory.push({
         role: "assistant",
         content: assistantText
       });
+
+      await saveMessage("assistant", assistantText);
     }
   } catch (error) {
     console.error(error);
+
     addMessageToChat(
       "assistant",
       "请求遇到问题：" + error.message
