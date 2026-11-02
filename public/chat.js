@@ -56,7 +56,20 @@ async function api(path, options = {}) {
   return data;
 }
 
-// 主题颜色
+// 界面模式：浅色 / 深色
+function applyColorMode(mode) {
+  const selectedMode = mode === "light" ? "light" : "dark";
+
+  document.documentElement.dataset.theme = selectedMode;
+  $("mode-select").value = selectedMode;
+
+  try {
+    localStorage.setItem("yoyofeeai-mode", selectedMode);
+  } catch (error) {
+    console.warn("无法保存界面模式", error);
+  }
+}
+// 强调颜色
 function applyTheme(color) {
   const allowed = [
     "#10a37f",
@@ -65,6 +78,18 @@ function applyTheme(color) {
     "#f59e0b",
     "#ec4899"
   ];
+
+  const selected = allowed.includes(color) ? color : "#10a37f";
+
+  document.documentElement.style.setProperty("--accent", selected);
+  $("theme-select").value = selected;
+
+  try {
+    localStorage.setItem("yoyofeeai-theme", selected);
+  } catch (error) {
+    console.warn("无法保存主题设置", error);
+  }
+}
 
   const selected = allowed.includes(color) ? color : "#10a37f";
 
