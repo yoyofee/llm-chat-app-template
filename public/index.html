@@ -17,6 +17,16 @@
   --border: #383838;
 }
 
+/* 浅色模式 */
+:root[data-theme="light"] {
+  --bg: #f7f7f8;
+  --panel: #ffffff;
+  --panel2: #eeeeef;
+  --text: #202123;
+  --muted: #6b7280;
+  --border: #dedee3;
+}
+
 * { box-sizing: border-box; }
 
 body {
@@ -486,13 +496,18 @@ button { cursor: pointer; }
         <option value="doubao">豆包</option>
       </select>
 
-      <select id="theme-select" aria-label="主题颜色">
-        <option value="#10a37f">绿色</option>
-        <option value="#3b82f6">蓝色</option>
-        <option value="#8b5cf6">紫色</option>
-        <option value="#f59e0b">橙色</option>
-        <option value="#ec4899">粉色</option>
-      </select>
+<select id="mode-select" aria-label="界面模式">
+  <option value="dark">深色模式</option>
+  <option value="light">浅色模式</option>
+</select>
+
+<select id="theme-select" aria-label="强调颜色">
+  <option value="#10a37f">绿色</option>
+  <option value="#3b82f6">蓝色</option>
+  <option value="#8b5cf6">紫色</option>
+  <option value="#f59e0b">橙色</option>
+  <option value="#ec4899">粉色</option>
+</select>
 
       <button class="small-button" id="logout-button">退出</button>
     </div>
