@@ -248,7 +248,13 @@ async function enterChat(user) {
   })();
 
   applyTheme(user.theme_color || savedTheme || "#10a37f");
-
+  let savedMode = "dark";
+  try {
+    savedMode = localStorage.getItem("yoyofeeai-mode") || "dark";
+  } catch (error) {
+    console.warn("无法读取界面模式", error);
+  }
+  applyColorMode(savedMode);
   showView(chatView);
 
   isLoadingHistory = true;
