@@ -1,418 +1,552 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#212121">
-  <title>yoyofeeai - 家庭 AI</title>
-  <style>
-    :root {
-      --accent: #10a37f;
-      --bg: #212121;
-      --panel: #2f2f2f;
-      --panel2: #303030;
-      --text: #ececec;
-      --muted: #a0a0a0;
-      --border: #454545;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#212121">
+<title>yoyofeeai - 家庭 AI</title>
 
-    * { box-sizing: border-box; }
+<style>
+:root {
+  --accent: #10a37f;
+  --bg: #212121;
+  --panel: #171717;
+  --panel2: #2f2f2f;
+  --text: #ececec;
+  --muted: #a0a0a0;
+  --border: #383838;
+}
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Arial, "Microsoft YaHei", sans-serif;
-    }
+* { box-sizing: border-box; }
 
-    button, input, textarea, select { font: inherit; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, "Microsoft YaHei", sans-serif;
+}
 
-    button {
-      cursor: pointer;
-      border: 0;
-      border-radius: 9px;
-      padding: 12px 18px;
-      background: var(--accent);
-      color: white;
-    }
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
 
-    button:hover { filter: brightness(1.08); }
+.hidden { display: none !important; }
 
-    .hidden { display: none !important; }
+/* 登录页面 */
 
-    /* 登录页面 */
-    #login-view {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
+#login-view {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
 
-    .login-card {
-      width: 100%;
-      max-width: 410px;
-      padding: 34px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: 0 15px 50px #0003;
-    }
+.login-card {
+  width: 100%;
+  max-width: 410px;
+  padding: 34px;
+  background: #2f2f2f;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 15px 50px #0005;
+}
 
-    .brand {
-      text-align: center;
-      margin-bottom: 28px;
-    }
+.brand {
+  text-align: center;
+  margin-bottom: 28px;
+}
 
-    .brand-logo {
-      width: 52px;
-      height: 52px;
-      margin: 0 auto 14px;
-      display: grid;
-      place-items: center;
-      border-radius: 16px;
-      background: var(--accent);
-      color: white;
-      font-size: 25px;
-      font-weight: bold;
-    }
+.brand-logo {
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 14px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: var(--accent);
+  color: white;
+  font-size: 25px;
+  font-weight: bold;
+}
 
-    .brand h1 { margin: 0; font-size: 27px; }
-    .brand p { color: var(--muted); font-size: 14px; }
+.brand h1 { margin: 0; font-size: 27px; }
+.brand p { color: var(--muted); font-size: 14px; }
 
-    .field { margin: 18px 0; }
+.field { margin: 18px 0; }
 
-    .field label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      color: var(--muted);
-    }
+.field label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
 
-    .field input, .field select {
-      width: 100%;
-      padding: 13px;
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      outline: none;
-      background: #212121;
-      color: var(--text);
-    }
+.field input, .field select {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  outline: none;
+  background: #212121;
+  color: var(--text);
+}
 
-    .field input:focus {
-      border-color: var(--accent);
-    }
+.field input:focus { border-color: var(--accent); }
 
-    .primary-button {
-      width: 100%;
-      margin-top: 10px;
-      font-weight: bold;
-    }
+.primary-button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 13px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--accent);
+  color: white;
+  font-weight: bold;
+}
 
-    .error {
-      color: #ff8585;
-      font-size: 13px;
-      min-height: 20px;
-      margin-top: 12px;
-    }
+.error {
+  color: #ff8585;
+  font-size: 13px;
+  min-height: 20px;
+  margin-top: 12px;
+}
 
-    .login-footer {
-      margin-top: 25px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 12px;
-    }
+.login-footer {
+  margin-top: 25px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+}
 
-    .text-button {
-      display: block;
-      margin: 18px auto 0;
-      padding: 5px;
-      background: transparent;
-      color: var(--muted);
-      font-size: 13px;
-    }
+.text-button {
+  display: block;
+  margin: 18px auto 0;
+  padding: 5px;
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  font-size: 13px;
+}
 
-    /* 聊天页面 */
-    #chat-view {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+/* 聊天主界面 */
 
-    .topbar {
-      height: 62px;
-      padding: 0 22px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg);
-    }
+#chat-view {
+  height: 100vh;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-    .topbar strong { font-size: 19px; }
+.topbar {
+  height: 62px;
+  flex-shrink: 0;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  z-index: 5;
+}
 
-    .top-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+.topbar strong { font-size: 19px; }
 
-    .top-actions select {
-      max-width: 115px;
-      padding: 8px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--panel);
-      color: var(--text);
-    }
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
 
-    .small-button {
-      padding: 8px 12px;
-      font-size: 13px;
-      background: var(--panel2);
-      border: 1px solid var(--border);
-    }
+.top-actions select {
+  max-width: 125px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel2);
+  color: var(--text);
+}
 
-    .chat-container {
-      width: 100%;
-      max-width: 850px;
-      margin: 0 auto;
-      padding: 20px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: calc(100vh - 62px);
-    }
+.small-button {
+  padding: 8px 12px;
+  font-size: 13px;
+  background: var(--panel2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
 
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px 5px;
-    }
+.app-layout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
 
-    .message {
-      max-width: 85%;
-      width: fit-content;
-      margin: 15px 0;
-      padding: 13px 17px;
-      border-radius: 16px;
-      line-height: 1.7;
-      overflow-wrap: anywhere;
-    }
+/* 左侧历史记录栏 */
 
-    .message p { margin: 0; white-space: pre-wrap; }
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 12px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+}
 
-    .user-message {
-      margin-left: auto;
-      background: var(--panel2);
-    }
+.new-chat-button {
+  width: 100%;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid #555;
+  border-radius: 9px;
+  text-align: left;
+}
 
-    .assistant-message {
-      margin-right: auto;
-      background: transparent;
-    }
+.new-chat-button:hover,
+.history-item:hover {
+  background: #303030;
+}
 
-    .message-input {
-      display: flex;
-      gap: 10px;
-      padding: 12px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 15px;
-    }
+.sidebar-title {
+  padding: 22px 9px 10px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: bold;
+}
 
-    #user-input {
-      flex: 1;
-      min-height: 44px;
-      max-height: 180px;
-      resize: none;
-      border: 0;
-      outline: 0;
-      background: transparent;
-      color: var(--text);
-      padding: 10px;
-    }
+.history-list {
+  flex: 1;
+  overflow-y: auto;
+}
 
-    #send-button { align-self: flex-end; }
+.history-item {
+  width: 100%;
+  display: block;
+  margin: 3px 0;
+  padding: 10px;
+  overflow: hidden;
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: transparent;
+  color: var(--text);
+  border: 0;
+  border-radius: 8px;
+  font-size: 13px;
+}
 
-    .typing-indicator {
-      display: none;
-      color: var(--muted);
-      padding: 10px;
-    }
+.history-item.active {
+  background: #343434;
+}
 
-    .typing-indicator.visible { display: block; }
+.sidebar-footer {
+  padding: 12px 8px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+}
 
-    .welcome {
-      margin: auto;
-      padding: 35px 10px;
-      text-align: center;
-      color: var(--muted);
-    }
+/* 右侧聊天区域 */
 
-    .welcome h2 {
-      color: var(--text);
-      font-size: 26px;
-    }
+.chat-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-    .notice {
-      color: var(--muted);
-      text-align: center;
-      font-size: 12px;
-      padding: 12px;
-    }
+.chat-container {
+  width: 100%;
+  max-width: 900px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px 10px;
+}
 
-    @media (max-width: 600px) {
-      .login-card { padding: 25px 20px; }
-      .topbar { padding: 0 12px; }
-      .top-actions { gap: 5px; }
-      .top-actions select { max-width: 95px; }
-      .small-button { padding: 7px 9px; }
-      .chat-container { padding: 12px; }
-      .message { max-width: 94%; }
-    }
-  </style>
+.chat-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 5px;
+}
+
+.message {
+  max-width: 85%;
+  width: fit-content;
+  margin: 15px 0;
+  padding: 13px 17px;
+  border-radius: 16px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.message p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.user-message {
+  margin-left: auto;
+  background: var(--panel2);
+}
+
+.assistant-message {
+  margin-right: auto;
+  background: transparent;
+}
+
+.welcome {
+  margin: auto;
+  padding: 35px 10px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.welcome h2 {
+  color: var(--text);
+  font-size: 27px;
+  font-weight: 600;
+}
+
+.message-input {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  box-shadow: 0 4px 20px #0002;
+}
+
+#user-input {
+  flex: 1;
+  min-height: 44px;
+  max-height: 180px;
+  resize: none;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  padding: 10px;
+}
+
+#send-button {
+  align-self: flex-end;
+  padding: 11px 19px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--accent);
+  color: white;
+}
+
+.typing-indicator {
+  display: none;
+  color: var(--muted);
+  padding: 10px;
+}
+
+.typing-indicator.visible { display: block; }
+
+.notice {
+  color: var(--muted);
+  text-align: center;
+  font-size: 12px;
+  padding: 12px;
+}
+
+/* 小屏幕适配 */
+
+@media (max-width: 700px) {
+  .topbar { padding: 0 10px; }
+  .top-actions { gap: 4px; }
+  .top-actions select { max-width: 90px; }
+  #account-label { display: none; }
+  .sidebar { width: 115px; padding: 10px 6px; }
+  .sidebar-title { padding: 18px 5px 8px; }
+  .history-item { padding: 9px 5px; }
+  .chat-container { padding: 12px 9px; }
+  .message { max-width: 95%; }
+  .small-button { padding: 7px 8px; }
+}
+
+@media (max-width: 380px) {
+  .sidebar { width: 95px; }
+  .topbar strong { font-size: 16px; }
+  .top-actions select { max-width: 75px; }
+}
+</style>
 </head>
 
 <body>
 
-  <!-- 登录页面 -->
-  <section id="login-view">
-    <div class="login-card">
+<!-- 登录页面 -->
+<section id="login-view">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-logo">Y</div>
+      <h1>yoyofeeai</h1>
+      <p>你的家庭 AI 助手</p>
+    </div>
 
-      <div class="brand">
-        <div class="brand-logo">Y</div>
-        <h1>yoyofeeai</h1>
-        <p>你的家庭 AI 助手</p>
+    <form id="login-form">
+      <div class="field">
+        <label for="login-username">家庭成员账号</label>
+        <input id="login-username" type="text"
+          placeholder="请输入账号" autocomplete="username" required>
       </div>
 
-      <form id="login-form">
-        <div class="field">
-          <label for="login-username">家庭成员账号</label>
-          <input id="login-username" type="text"
-            placeholder="请输入账号" autocomplete="username" required>
-        </div>
+      <div class="field">
+        <label for="login-password">登录密码</label>
+        <input id="login-password" type="password"
+          placeholder="请输入密码" autocomplete="current-password" required>
+      </div>
 
-        <div class="field">
-          <label for="login-password">登录密码</label>
-          <input id="login-password" type="password"
-            placeholder="请输入密码" autocomplete="current-password" required>
-        </div>
+      <button class="primary-button" type="submit" id="login-button">
+        登录 yoyofeeai
+      </button>
+      <div class="error" id="login-error"></div>
+    </form>
 
-        <button class="primary-button" type="submit" id="login-button">
-          登录 yoyofeeai
-        </button>
+    <button class="text-button" type="button" id="show-bootstrap">
+      首次使用？初始化管理员
+    </button>
 
-        <div class="error" id="login-error"></div>
-      </form>
+    <form id="bootstrap-form" class="hidden">
+      <div class="field">
+        <label for="setup-secret">管理员初始化密钥</label>
+        <input id="setup-secret" type="password" required>
+      </div>
 
-      <button class="text-button" type="button" id="show-bootstrap">
-        首次使用？初始化管理员
+      <div class="field">
+        <label for="admin-username">管理员账号</label>
+        <input id="admin-username" type="text"
+          autocomplete="username" required>
+      </div>
+
+      <div class="field">
+        <label for="admin-password">管理员密码（至少12位）</label>
+        <input id="admin-password" type="password"
+          autocomplete="new-password" required minlength="12">
+      </div>
+
+      <button class="primary-button" type="submit">创建管理员</button>
+      <div class="error" id="bootstrap-error"></div>
+      <button class="text-button" type="button" id="back-to-login">
+        返回登录
+      </button>
+    </form>
+
+    <div class="login-footer">仅供家庭成员使用 · yoyofeeai</div>
+  </div>
+</section>
+
+<!-- 修改密码页面 -->
+<section id="password-view" class="hidden">
+  <div class="login-card" style="margin:auto">
+    <div class="brand">
+      <div class="brand-logo">Y</div>
+      <h1>修改初始密码</h1>
+      <p>为了账号安全，请先设置新密码</p>
+    </div>
+
+    <form id="password-form">
+      <div class="field">
+        <label for="new-password">新密码（至少10位）</label>
+        <input id="new-password" type="password"
+          autocomplete="new-password" required minlength="10">
+      </div>
+      <button class="primary-button" type="submit">保存新密码</button>
+      <div class="error" id="password-error"></div>
+    </form>
+  </div>
+</section>
+
+<!-- 聊天主页面 -->
+<section id="chat-view" class="hidden">
+
+  <header class="topbar">
+    <strong>yoyofeeai</strong>
+
+    <div class="top-actions">
+      <span id="account-label"></span>
+
+      <select id="model-select" aria-label="选择AI模型">
+        <option value="cloudflare">Cloudflare AI</option>
+        <option value="openai">ChatGPT</option>
+        <option value="deepseek">DeepSeek</option>
+        <option value="doubao">豆包</option>
+      </select>
+
+      <select id="theme-select" aria-label="主题颜色">
+        <option value="#10a37f">绿色</option>
+        <option value="#3b82f6">蓝色</option>
+        <option value="#8b5cf6">紫色</option>
+        <option value="#f59e0b">橙色</option>
+        <option value="#ec4899">粉色</option>
+      </select>
+
+      <button class="small-button" id="logout-button">退出</button>
+    </div>
+  </header>
+
+  <div class="app-layout">
+
+    <!-- 左侧聊天记录 -->
+    <aside class="sidebar">
+      <button class="new-chat-button" id="new-chat-button" type="button">
+        <span>＋</span>
+        <span>新建聊天</span>
       </button>
 
-      <!-- 首次管理员初始化 -->
-      <form id="bootstrap-form" class="hidden">
-        <div class="field">
-          <label for="setup-secret">管理员初始化密钥</label>
-          <input id="setup-secret" type="password" required>
+      <div class="sidebar-title">最近聊天</div>
+
+      <div class="history-list" id="history-list">
+        <div class="sidebar-footer">聊天记录加载中……</div>
+      </div>
+
+      <div class="sidebar-footer">yoyofeeai 家庭 AI</div>
+    </aside>
+
+    <!-- 右侧聊天窗口 -->
+    <main class="chat-main">
+      <div class="chat-container">
+
+        <div class="welcome" id="welcome">
+          <h2>有什么可以帮忙的？</h2>
+          <p>欢迎使用 yoyofeeai 家庭 AI 助手</p>
         </div>
 
-        <div class="field">
-          <label for="admin-username">管理员账号</label>
-          <input id="admin-username" type="text"
-            autocomplete="username" required>
+        <div id="chat-messages" class="chat-messages"></div>
+
+        <div class="typing-indicator" id="typing-indicator">
+          AI 正在思考……
         </div>
 
-        <div class="field">
-          <label for="admin-password">管理员密码（至少12位）</label>
-          <input id="admin-password" type="password"
-            autocomplete="new-password" required minlength="12">
+        <div class="message-input">
+          <textarea id="user-input" rows="1"
+            placeholder="给 yoyofeeai 发送消息……"></textarea>
+          <button id="send-button" type="button">发送</button>
         </div>
 
-        <button class="primary-button" type="submit">
-          创建管理员
-        </button>
-
-        <div class="error" id="bootstrap-error"></div>
-        <button class="text-button" type="button" id="back-to-login">
-          返回登录
-        </button>
-      </form>
-
-      <div class="login-footer">
-        仅供家庭成员使用 · yoyofeeai
-      </div>
-    </div>
-  </section>
-
-  <!-- 修改密码页面 -->
-  <section id="password-view" class="hidden">
-    <div class="login-card" style="margin:auto">
-      <div class="brand">
-        <div class="brand-logo">Y</div>
-        <h1>修改初始密码</h1>
-        <p>为了账号安全，请先设置新密码</p>
-      </div>
-
-      <form id="password-form">
-        <div class="field">
-          <label for="new-password">新密码（至少10位）</label>
-          <input id="new-password" type="password"
-            autocomplete="new-password" required minlength="10">
+        <div class="notice">
+          AI 生成的内容可能存在错误，请注意核实。
         </div>
-        <button class="primary-button" type="submit">保存新密码</button>
-        <div class="error" id="password-error"></div>
-      </form>
-    </div>
-  </section>
 
-  <!-- 聊天主页面 -->
-  <section id="chat-view" class="hidden">
-    <header class="topbar">
-      <strong>yoyofeeai</strong>
-      <div class="top-actions">
-        <span id="account-label"></span>
-        <select id="model-select" aria-label="选择AI模型">
-  <option value="cloudflare">Cloudflare AI</option>
-  <option value="openai">ChatGPT</option>
-  <option value="deepseek">DeepSeek</option>
-  <option value="doubao">豆包</option>
-</select>
-        <select id="theme-select" aria-label="主题颜色">
-          <option value="#10a37f">绿色</option>
-          <option value="#3b82f6">蓝色</option>
-          <option value="#8b5cf6">紫色</option>
-          <option value="#f59e0b">橙色</option>
-          <option value="#ec4899">粉色</option>
-        </select>
-        <button class="small-button" id="logout-button">退出</button>
       </div>
-    </header>
-
-    <main class="chat-container">
-      <div class="welcome" id="welcome">
-        <h2>有什么可以帮忙的？</h2>
-        <p>欢迎使用 yoyofeeai 家庭 AI 助手</p>
-      </div>
-
-      <div id="chat-messages" class="chat-messages"></div>
-
-      <div class="typing-indicator" id="typing-indicator">
-        AI 正在思考……
-      </div>
-
-      <div class="message-input">
-        <textarea id="user-input" rows="1"
-          placeholder="给 yoyofeeai 发送消息……"></textarea>
-        <button id="send-button" type="button">发送</button>
-      </div>
-
-      <div class="notice">AI 生成的内容可能存在错误，请注意核实。</div>
     </main>
-  </section>
 
-  <script src="chat.js"></script>
+  </div>
+</section>
+
+<script src="chat.js"></script>
 </body>
 </html>
