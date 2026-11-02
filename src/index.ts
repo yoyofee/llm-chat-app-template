@@ -1,3 +1,4 @@
+
 /**
  * yoyofeeai - Worker entry
  */
@@ -9,6 +10,8 @@ const MODEL_ID = "@cf/meta/llama-3.1-8b-instruct-fp8";
 const SYSTEM_PROMPT =
   "You are a helpful, friendly assistant. Provide concise and accurate responses.";
 
+type Provider = "cloudflare" | "openai" | "deepseek" | "doubao";
+
 export default {
   async fetch(
     request: Request,
@@ -18,12 +21,10 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // Authentication API
     if (path.startsWith("/api/auth/")) {
       return handleAuthRequest(request, env, path);
     }
 
-    // All other API requests require login
     if (path.startsWith("/api/")) {
       const user = await getCurrentUser(request, env);
 
@@ -41,7 +42,6 @@ export default {
         );
       }
 
-      // AI chat API
       if (path === "/api/chat") {
         if (request.method !== "POST") {
           return new Response("Method not allowed", { status: 405 });
@@ -50,7 +50,6 @@ export default {
         return handleChatRequest(request, env);
       }
 
-      // List conversations
       if (path === "/api/conversations") {
         if (request.method === "GET") {
           return listConversations(env, user.id);
@@ -63,7 +62,6 @@ export default {
         return new Response("Method not allowed", { status: 405 });
       }
 
-      // Read or save messages in one conversation
       const messagesMatch = path.match(
         /^\/api\/conversations\/([^/]+)\/messages$/,
       );
@@ -85,12 +83,11 @@ export default {
       return new Response("Not found", { status: 404 });
     }
 
-    // Frontend assets
     return env.ASSETS.fetch(request);
   },
 } satisfies ExportedHandler<Env>;
 
-// Get the current user's conversations only
+// List conversations belonging to the current user
 async function listConversations(
   env: Env,
   userId: string,
@@ -109,7 +106,7 @@ async function listConversations(
   });
 }
 
-// Create a conversation for the logged-in user
+// Create a conversation
 async function createConversation(
   request: Request,
   env: Env,
@@ -135,25 +132,19 @@ async function createConversation(
     .run();
 
   return Response.json(
-    {
-      conversation: {
-        id,
-        title,
-      },
-    },
+    { conversation: { id, title } },
     { status: 201 },
   );
 }
 
-// Get messages only when the conversation belongs to this user
+// Read messages belonging to the current user
 async function listMessages(
   env: Env,
   userId: string,
   conversationId: string,
 ): Promise<Response> {
   const conversation = await env.DB.prepare(
-    `SELECT id
-     FROM conversations
+    `SELECT id FROM conversations
      WHERE id = ? AND user_id = ?`,
   )
     .bind(conversationId, userId)
@@ -175,12 +166,10 @@ async function listMessages(
     .bind(conversationId, userId)
     .all();
 
-  return Response.json({
-    messages: result.results,
-  });
+  return Response.json({ messages: result.results });
 }
 
-// Save a message to a conversation owned by the logged-in user
+// Save a message
 async function saveMessage(
   request: Request,
   env: Env,
@@ -188,8 +177,7 @@ async function saveMessage(
   conversationId: string,
 ): Promise<Response> {
   const conversation = await env.DB.prepare(
-    `SELECT id
-     FROM conversations
+    `SELECT id FROM conversations
      WHERE id = ? AND user_id = ?`,
   )
     .bind(conversationId, userId)
@@ -256,22 +244,36 @@ async function saveMessage(
   );
 }
 
-// Existing Cloudflare AI streaming chat
+// AI chat request
 async function handleChatRequest(
   request: Request,
   env: Env,
 ): Promise<Response> {
   try {
-    const body = await request.json() as {
+    const body = await request.json().catch(() => null) as {
       messages?: ChatMessage[];
-    };
+      provider?: string;
+    } | null;
 
-    if (!Array.isArray(body.messages)) {
+    if (!body || !Array.isArray(body.messages)) {
       return Response.json(
         { error: "消息格式错误" },
         { status: 400 },
       );
     }
+
+    const allowedProviders: Provider[] = [
+      "cloudflare",
+      "openai",
+      "deepseek",
+      "doubao",
+    ];
+
+    const provider = (
+      allowedProviders.includes(body.provider as Provider)
+        ? body.provider
+        : "cloudflare"
+    ) as Provider;
 
     const messages = body.messages
       .filter((msg) =>
@@ -286,35 +288,167 @@ async function handleChatRequest(
         content: msg.content,
       }));
 
+    if (messages.length === 0) {
+      return Response.json(
+        { error: "请先输入聊天内容" },
+        { status: 400 },
+      );
+    }
+
     messages.unshift({
       role: "system",
       content: SYSTEM_PROMPT,
     });
 
-    const inputs = {
-      messages,
-      max_tokens: 1024,
-      stream: true,
-    } satisfies AiTextGenerationInput & { stream: true };
+    if (provider === "cloudflare") {
+      return chatWithCloudflare(env, messages);
+    }
 
-    const stream = await env.AI.run<typeof MODEL_ID>(
-      MODEL_ID,
-      inputs,
-    );
+    if (provider === "openai") {
+      if (!env.OPENAI_API_KEY) {
+        return missingKey("OpenAI");
+      }
 
-    return new Response(stream, {
-      headers: {
-        "content-type": "text/event-stream; charset=utf-8",
-        "cache-control": "no-cache",
-        connection: "keep-alive",
-      },
-    });
-  } catch (error) {
-    console.error("Error processing chat request:", error);
+      return chatWithCompatibleAPI(
+        "https://api.openai.com/v1/chat/completions",
+        env.OPENAI_API_KEY,
+        "gpt-4o-mini",
+        messages,
+      );
+    }
+
+    if (provider === "deepseek") {
+      if (!env.DEEPSEEK_API_KEY) {
+        return missingKey("DeepSeek");
+      }
+
+      return chatWithCompatibleAPI(
+        "https://api.deepseek.com/chat/completions",
+        env.DEEPSEEK_API_KEY,
+        "deepseek-flash",
+        messages,
+      );
+    }
+
+    if (provider === "doubao") {
+      if (!env.ARK_API_KEY) {
+        return missingKey("豆包");
+      }
+
+      if (!env.DOUBAO_MODEL_ID) {
+        return Response.json(
+          { error: "尚未配置豆包模型 ID 或接入点 ID" },
+          { status: 503 },
+        );
+      }
+
+      return chatWithCompatibleAPI(
+        "https://ark.cn-beijing.volces.com/api/v3/chat/completions",
+        env.ARK_API_KEY,
+        env.DOUBAO_MODEL_ID,
+        messages,
+      );
+    }
 
     return Response.json(
-      { error: "Failed to process request" },
+      { error: "不支持的模型服务" },
+      { status: 400 },
+    );
+  } catch (error) {
+    console.error("Chat request error:", error);
+
+    return Response.json(
+      { error: "AI 请求失败，请检查模型配置" },
       { status: 500 },
     );
   }
+}
+
+// Cloudflare Workers AI
+async function chatWithCloudflare(
+  env: Env,
+  messages: ChatMessage[],
+): Promise<Response> {
+  const inputs = {
+    messages,
+    max_tokens: 1024,
+    stream: true,
+  } satisfies AiTextGenerationInput & { stream: true };
+
+  const stream = await env.AI.run<typeof MODEL_ID>(
+    MODEL_ID,
+    inputs,
+  );
+
+  return new Response(stream, {
+    headers: {
+      "content-type": "text/event-stream; charset=utf-8",
+      "cache-control": "no-cache",
+      connection: "keep-alive",
+    },
+  });
+}
+
+// OpenAI-compatible streaming API
+async function chatWithCompatibleAPI(
+  endpoint: string,
+  apiKey: string,
+  model: string,
+  messages: ChatMessage[],
+): Promise<Response> {
+  const upstream = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      stream: true,
+      max_tokens: 1024,
+    }),
+  });
+
+  if (!upstream.ok) {
+    const errorText = await upstream.text();
+
+    console.error(
+      "Model API error:",
+      upstream.status,
+      errorText.slice(0, 1000),
+    );
+
+    return Response.json(
+      {
+        error: `模型服务请求失败，状态码：${upstream.status}`,
+      },
+      { status: 502 },
+    );
+  }
+
+  if (!upstream.body) {
+    return Response.json(
+      { error: "模型服务没有返回数据流" },
+      { status: 502 },
+    );
+  }
+
+  return new Response(upstream.body, {
+    headers: {
+      "content-type": "text/event-stream; charset=utf-8",
+      "cache-control": "no-cache",
+      connection: "keep-alive",
+    },
+  });
+}
+
+// Missing API key response
+function missingKey(provider: string): Response {
+  return Response.json(
+    {
+      error: `${provider} 尚未配置 API Key，请联系管理员`,
+    },
+    { status: 503 },
+  );
 }
