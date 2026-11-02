@@ -435,7 +435,9 @@ $("logout-button").addEventListener("click", async () => {
 $("theme-select").addEventListener("change", (event) => {
   applyTheme(event.target.value);
 });
-
+$("mode-select").addEventListener("change", (event) => {
+  applyColorMode(event.target.value);
+});
 // 新建聊天按钮
 $("new-chat-button").addEventListener("click", newChat);
 
