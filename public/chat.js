@@ -1,6 +1,6 @@
 /**
- * yoyofeeai frontend
- * Login, account session, theme and persistent AI chat.
+ * yoyofeeai
+ * 登录、聊天、历史记录、新建聊天和数据库持久化
  */
 
 const $ = (id) => document.getElementById(id);
@@ -19,12 +19,14 @@ const sendButton = $("send-button");
 const modelSelect = $("model-select");
 const typingIndicator = $("typing-indicator");
 const welcome = $("welcome");
+const historyList = $("history-list");
 
 let currentUser = null;
 let chatHistory = [];
 let currentConversationId = null;
 let isProcessing = false;
 let isLoadingHistory = false;
+let conversations = [];
 
 // 页面切换
 function showView(view) {
@@ -54,7 +56,7 @@ async function api(path, options = {}) {
   return data;
 }
 
-// 应用主题颜色
+// 主题颜色
 function applyTheme(color) {
   const allowed = [
     "#10a37f",
@@ -76,30 +78,85 @@ function applyTheme(color) {
   }
 }
 
-// 从数据库读取最近一次对话
-async function loadLatestConversation() {
-  currentConversationId = null;
-  chatHistory = [];
+// 清空聊天窗口
+function clearChatWindow() {
   chatMessages.replaceChildren();
+  chatHistory = [];
   welcome.classList.remove("hidden");
+}
 
+// 显示聊天消息
+function addMessageToChat(role, content) {
+  const message = document.createElement("div");
+  message.className = `message ${role}-message`;
+
+  const paragraph = document.createElement("p");
+  paragraph.textContent = content;
+
+  message.appendChild(paragraph);
+  chatMessages.appendChild(message);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  welcome.classList.add("hidden");
+
+  return paragraph;
+}
+
+// 加载左侧历史记录
+async function loadConversationList() {
   const data = await api("/api/conversations");
-  const conversations = data.conversations || [];
+
+  conversations = data.conversations || [];
+
+  renderConversationList();
+}
+
+// 绘制左侧历史记录
+function renderConversationList() {
+  historyList.replaceChildren();
 
   if (conversations.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "sidebar-footer";
+    empty.textContent = "暂无聊天记录";
+    historyList.appendChild(empty);
     return;
   }
 
-  const latest = conversations[0];
-  currentConversationId = latest.id;
+  conversations.forEach((conversation) => {
+    const button = document.createElement("button");
 
-  const messageData = await api(
+    button.type = "button";
+    button.className = "history-item";
+
+    if (conversation.id === currentConversationId) {
+      button.classList.add("active");
+    }
+
+    button.textContent = conversation.title || "新对话";
+    button.title = conversation.title || "新对话";
+
+    button.addEventListener("click", () => {
+      switchConversation(conversation.id);
+    });
+
+    historyList.appendChild(button);
+  });
+}
+
+// 加载指定对话
+async function loadConversation(conversationId) {
+  const data = await api(
     "/api/conversations/" +
-    encodeURIComponent(currentConversationId) +
+    encodeURIComponent(conversationId) +
     "/messages"
   );
 
-  const messages = messageData.messages || [];
+  const messages = data.messages || [];
+
+  clearChatWindow();
+
+  currentConversationId = conversationId;
 
   chatHistory = messages
     .filter((item) =>
@@ -111,13 +168,57 @@ async function loadLatestConversation() {
       content: item.content
     }));
 
-  for (const item of chatHistory) {
+  chatHistory.forEach((item) => {
     addMessageToChat(item.role, item.content);
+  });
+
+  renderConversationList();
+}
+
+// 切换历史对话
+async function switchConversation(conversationId) {
+  if (isProcessing || isLoadingHistory) {
+    return;
   }
 
-  if (chatHistory.length > 0) {
-    welcome.classList.add("hidden");
+  isLoadingHistory = true;
+  userInput.disabled = true;
+  sendButton.disabled = true;
+
+  try {
+    await loadConversation(conversationId);
+  } catch (error) {
+    alert("读取聊天记录失败：" + error.message);
+  } finally {
+    isLoadingHistory = false;
+    userInput.disabled = false;
+    sendButton.disabled = false;
+    userInput.focus();
   }
+}
+
+// 新建聊天
+function newChat() {
+  if (isProcessing || isLoadingHistory) {
+    return;
+  }
+
+  currentConversationId = null;
+  clearChatWindow();
+  renderConversationList();
+  userInput.focus();
+}
+
+// 加载最近一次对话
+async function loadLatestConversation() {
+  await loadConversationList();
+
+  if (conversations.length === 0) {
+    newChat();
+    return;
+  }
+
+  await loadConversation(conversations[0].id);
 }
 
 // 进入聊天页面
@@ -157,7 +258,7 @@ async function enterChat(user) {
   }
 }
 
-// 检查当前登录状态
+// 检查登录状态
 async function checkSession() {
   try {
     const data = await api("/api/auth/me");
@@ -216,7 +317,7 @@ loginForm.addEventListener("submit", async (event) => {
   }
 });
 
-// 显示管理员初始化表单
+// 管理员初始化
 $("show-bootstrap").addEventListener("click", () => {
   loginForm.classList.add("hidden");
   $("show-bootstrap").classList.add("hidden");
@@ -230,7 +331,7 @@ $("back-to-login").addEventListener("click", () => {
   $("show-bootstrap").classList.remove("hidden");
 });
 
-// 首次创建管理员
+// 创建管理员
 bootstrapForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -303,7 +404,10 @@ $("logout-button").addEventListener("click", async () => {
   currentUser = null;
   currentConversationId = null;
   chatHistory = [];
-  chatMessages.replaceChildren();
+  conversations = [];
+
+  clearChatWindow();
+  historyList.replaceChildren();
 
   showView(loginView);
 });
@@ -313,22 +417,8 @@ $("theme-select").addEventListener("change", (event) => {
   applyTheme(event.target.value);
 });
 
-// 添加聊天消息
-function addMessageToChat(role, content) {
-  const message = document.createElement("div");
-  message.className = `message ${role}-message`;
-
-  const paragraph = document.createElement("p");
-  paragraph.textContent = content;
-
-  message.appendChild(paragraph);
-  chatMessages.appendChild(message);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-
-  welcome.classList.add("hidden");
-
-  return paragraph;
-}
+// 新建聊天按钮
+$("new-chat-button").addEventListener("click", newChat);
 
 // 输入框自动调整高度
 userInput.addEventListener("input", () => {
@@ -361,6 +451,8 @@ async function ensureConversation(firstMessage) {
   });
 
   currentConversationId = data.conversation.id;
+
+  await loadConversationList();
 
   return currentConversationId;
 }
@@ -410,7 +502,6 @@ async function sendMessage() {
   let assistantText = "";
 
   try {
-    // 创建对话并先保存用户消息
     await ensureConversation(message);
     await saveMessage("user", message);
 
@@ -421,7 +512,6 @@ async function sendMessage() {
       content: message
     });
 
-    // 请求 AI
     const response = await fetch("/api/chat", {
       method: "POST",
       credentials: "same-origin",
@@ -525,7 +615,6 @@ async function sendMessage() {
       processEvent(buffer);
     }
 
-    // 保存 AI 回复
     if (assistantText) {
       chatHistory.push({
         role: "assistant",
@@ -534,6 +623,9 @@ async function sendMessage() {
 
       await saveMessage("assistant", assistantText);
     }
+
+    await loadConversationList();
+
   } catch (error) {
     console.error(error);
 
@@ -550,5 +642,5 @@ async function sendMessage() {
   }
 }
 
-// 页面启动时检查登录状态
+// 页面启动
 checkSession();
