@@ -91,18 +91,6 @@ function applyTheme(color) {
   }
 }
 
-  const selected = allowed.includes(color) ? color : "#10a37f";
-
-  document.documentElement.style.setProperty("--accent", selected);
-  $("theme-select").value = selected;
-
-  try {
-    localStorage.setItem("yoyofeeai-theme", selected);
-  } catch (error) {
-    console.warn("无法保存主题设置", error);
-  }
-}
-
 // 清空聊天窗口
 function clearChatWindow() {
   chatMessages.replaceChildren();
