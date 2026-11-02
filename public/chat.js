@@ -16,6 +16,7 @@ const passwordForm = $("password-form");
 const chatMessages = $("chat-messages");
 const userInput = $("user-input");
 const sendButton = $("send-button");
+const modelSelect = $("model-select");
 const typingIndicator = $("typing-indicator");
 const welcome = $("welcome");
 
