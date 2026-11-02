@@ -1,4 +1,3 @@
-
 /**
  * yoyofeeai - Worker entry
  */
