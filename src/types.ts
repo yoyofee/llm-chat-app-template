@@ -1,23 +1,37 @@
+
 /**
- * Type definitions for the LLM chat application.
+ * Type definitions for the yoyofeeai application.
  */
 
 export interface Env {
-	/**
-	 * Binding for the Workers AI API.
-	 */
-	AI: Ai;
+  /**
+   * Cloudflare Workers AI binding.
+   */
+  AI: Ai;
 
-	/**
-	 * Binding for static assets.
-	 */
-	ASSETS: { fetch: (request: Request) => Promise<Response> };
+  /**
+   * Cloudflare D1 database binding.
+   */
+  DB: D1Database;
+
+  /**
+   * One-time administrator setup secret.
+   * Configure this in Cloudflare as a Worker secret.
+   */
+  ADMIN_SETUP_SECRET?: string;
+
+  /**
+   * Binding for static assets.
+   */
+  ASSETS: {
+    fetch: (request: Request) => Promise<Response>;
+  };
 }
 
 /**
  * Represents a chat message.
  */
 export interface ChatMessage {
-	role: "system" | "user" | "assistant";
-	content: string;
+  role: "system" | "user" | "assistant";
+  content: string;
 }
