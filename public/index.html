@@ -764,8 +764,27 @@ background: var(--panel2);
     </main>
 
   </div>
-</section>
+      <!-- 手机历史记录遮罩 -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
+    <!-- 电脑端人民币动画 -->
+    <aside class="money-panel" id="money-panel">
+      <div class="money-title">财富好运站</div>
+      <div class="money-amount">¥888.88</div>
+
+      <div class="money-stage" id="money-stage"></div>
+
+      <div class="money-controls">
+        <button id="money-toggle" type="button">暂停动画</button>
+
+        <select id="money-density" aria-label="动画密度">
+          <option value="low">少量</option>
+          <option value="normal" selected>正常</option>
+          <option value="high">热闹</option>
+        </select>
+      </div>
+    </aside>
+</section>
 <script src="chat.js"></script>
 </body>
 </html>
