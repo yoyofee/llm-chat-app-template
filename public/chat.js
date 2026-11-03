@@ -664,4 +664,186 @@ async function sendMessage() {
 }
 
 // 页面启动
+
+// ================================
+// 手机端历史记录抽屉
+// ================================
+
+const mobileMenuButton = $("mobile-menu-button");
+const sidebarOverlay = $("sidebar-overlay");
+const sidebar = document.querySelector(".sidebar");
+
+function openHistoryDrawer() {
+  if (!sidebar || !sidebarOverlay) return;
+
+  sidebar.classList.add("open");
+  sidebarOverlay.classList.add("visible");
+}
+
+function closeHistoryDrawer() {
+  if (!sidebar || !sidebarOverlay) return;
+
+  sidebar.classList.remove("open");
+  sidebarOverlay.classList.remove("visible");
+}
+
+if (mobileMenuButton) {
+  mobileMenuButton.addEventListener("click", openHistoryDrawer);
+}
+
+if (sidebarOverlay) {
+  sidebarOverlay.addEventListener("click", closeHistoryDrawer);
+}
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    closeHistoryDrawer();
+  }
+});
+
+// 选择历史对话后关闭手机抽屉
+const originalSwitchConversation = switchConversation;
+
+switchConversation = async function (conversationId) {
+  closeHistoryDrawer();
+  return originalSwitchConversation(conversationId);
+};
+
+// 新建聊天后关闭手机抽屉
+const originalNewChat = newChat;
+
+newChat = function () {
+  originalNewChat();
+  closeHistoryDrawer();
+};
+
+// ================================
+// 电脑端人民币动画
+// ================================
+
+const moneyStage = $("money-stage");
+const moneyToggle = $("money-toggle");
+const moneyDensity = $("money-density");
+
+let moneyPaused = false;
+let moneyTimer = null;
+let moneyItems = [];
+
+const moneyLimits = {
+  low: 3,
+  normal: 7,
+  high: 12
+};
+
+function getMoneyDensity() {
+  try {
+    return localStorage.getItem("yoyofeeai-money-density") || "normal";
+  } catch {
+    return "normal";
+  }
+}
+
+function saveMoneyDensity(value) {
+  try {
+    localStorage.setItem("yoyofeeai-money-density", value);
+  } catch (error) {
+    console.warn("无法保存动画设置", error);
+  }
+}
+
+function createMoneyItem() {
+  if (!moneyStage || moneyPaused) return;
+
+  const limit = moneyLimits[moneyDensity?.value] || 7;
+
+  if (moneyItems.length >= limit) return;
+
+  const item = document.createElement("div");
+  const isCoin = Math.random() > 0.5;
+
+  item.className = "money-item";
+
+  if (isCoin) {
+    item.classList.add("money-coin");
+    item.textContent = "🪙";
+  } else {
+    item.classList.add("money-bill");
+    item.textContent = "¥";
+  }
+
+  item.style.left = Math.random() * 85 + "%";
+  item.style.animationDuration = (5 + Math.random() * 5) + "s";
+
+  moneyStage.appendChild(item);
+  moneyItems.push(item);
+
+  item.addEventListener("animationend", () => {
+    item.remove();
+    moneyItems = moneyItems.filter((entry) => entry !== item);
+  }, { once: true });
+}
+
+function startMoneyAnimation() {
+  if (!moneyStage || moneyTimer || moneyPaused) return;
+
+  moneyTimer = setInterval(() => {
+    if (document.hidden) return;
+    if (window.matchMedia("(max-width: 700px)").matches) return;
+    createMoneyItem();
+  }, 850);
+}
+
+function stopMoneyAnimation() {
+  if (moneyTimer) {
+    clearInterval(moneyTimer);
+    moneyTimer = null;
+  }
+}
+
+function updateMoneyAnimation() {
+  if (!moneyStage) return;
+
+  if (moneyPaused || document.hidden ||
+      window.matchMedia("(max-width: 700px)").matches ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    stopMoneyAnimation();
+    return;
+  }
+
+  startMoneyAnimation();
+}
+
+if (moneyDensity) {
+  moneyDensity.value = getMoneyDensity();
+
+  moneyDensity.addEventListener("change", () => {
+    saveMoneyDensity(moneyDensity.value);
+    moneyItems.forEach((item) => item.remove());
+    moneyItems = [];
+  });
+}
+
+if (moneyToggle) {
+  moneyToggle.addEventListener("click", () => {
+    moneyPaused = !moneyPaused;
+
+    moneyToggle.textContent = moneyPaused ? "继续动画" : "暂停动画";
+
+    if (moneyPaused) {
+      stopMoneyAnimation();
+      moneyItems.forEach((item) => item.remove());
+      moneyItems = [];
+    } else {
+      updateMoneyAnimation();
+    }
+  });
+}
+
+document.addEventListener("visibilitychange", updateMoneyAnimation);
+window.addEventListener("resize", updateMoneyAnimation);
+
+if (moneyStage) {
+  updateMoneyAnimation();
+}
+
 checkSession();
