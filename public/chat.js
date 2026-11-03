@@ -256,7 +256,7 @@ async function enterChat(user) {
   }
   applyColorMode(savedMode);
   showView(chatView);
-
+  updateMoneyAnimation();
   isLoadingHistory = true;
   userInput.disabled = true;
   sendButton.disabled = true;
@@ -841,9 +841,4 @@ if (moneyToggle) {
 
 document.addEventListener("visibilitychange", updateMoneyAnimation);
 window.addEventListener("resize", updateMoneyAnimation);
-
-if (moneyStage) {
-  updateMoneyAnimation();
-}
-
 checkSession();
