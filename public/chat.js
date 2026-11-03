@@ -773,8 +773,7 @@ function createMoneyItem() {
     coin.textContent = "🪙";
     item.appendChild(coin);
    } else {
-    item.classList.add("money-red-envelope");
-    item.textContent = "🧧";
+   item.classList.add("money-red-envelope");
   }
 
   item.style.left = Math.random() * 85 + "%";
