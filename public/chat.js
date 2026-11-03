@@ -765,7 +765,11 @@ function createMoneyItem() {
 
   if (isCoin) {
     item.classList.add("money-coin");
-    item.textContent = "🪙";
+
+    const coin = document.createElement("span");
+    coin.className = "money-coin-symbol";
+    coin.textContent = "🪙";
+    item.appendChild(coin);
   } else {
     item.classList.add("money-bill");
     item.textContent = "¥";
