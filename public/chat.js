@@ -772,9 +772,9 @@ function createMoneyItem() {
     coin.className = "money-coin-symbol";
     coin.textContent = "🪙";
     item.appendChild(coin);
-  } else {
-    item.classList.add("money-bill");
-    item.textContent = "¥";
+   } else {
+    item.classList.add("money-red-envelope");
+    item.textContent = "🧧";
   }
 
   item.style.left = Math.random() * 85 + "%";
