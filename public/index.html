@@ -686,13 +686,9 @@ background: var(--panel2);
     <button class="small-button mobile-menu-button"
       id="mobile-menu-button" type="button"
       aria-label="打开聊天记录">☰</button>
-    <strong>yoyofeeai</strong>
-  </div>
-    <strong>yoyofeeai</strong>
-
+    <strong>yoyofeeAi</strong>
     <div class="top-actions">
       <span id="account-label"></span>
-
       <select id="model-select" aria-label="选择AI模型">
         <option value="cloudflare">Cloudflare AI</option>
         <option value="openai">ChatGPT</option>
@@ -712,13 +708,10 @@ background: var(--panel2);
   <option value="#f59e0b">橙色</option>
   <option value="#ec4899">粉色</option>
 </select>
-
       <button class="small-button" id="logout-button">退出</button>
     </div>
   </header>
-
   <div class="app-layout">
-
     <!-- 左侧聊天记录 -->
     <aside class="sidebar">
       <button class="new-chat-button" id="new-chat-button" type="button">
@@ -762,6 +755,20 @@ background: var(--panel2);
 
       </div>
     </main>
+        <!-- 电脑端人民币动画 -->
+    <aside class="money-panel" id="money-panel">
+      <div class="money-title">财富好运站</div>
+      <div class="money-amount">¥888.88</div>
+      <div class="money-stage" id="money-stage"></div>
+      <div class="money-controls">
+        <button id="money-toggle" type="button">暂停动画</button>
+        <select id="money-density" aria-label="动画密度">
+          <option value="low">少量</option>
+          <option value="normal" selected>正常</option>
+          <option value="high">热闹</option>
+        </select>
+      </div>
+    </aside>
 
   </div>
       <!-- 手机历史记录遮罩 -->
