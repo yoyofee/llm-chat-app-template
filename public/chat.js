@@ -781,10 +781,12 @@ function createMoneyItem() {
   moneyStage.appendChild(item);
   moneyItems.push(item);
 
-  item.addEventListener("animationend", () => {
+    item.addEventListener("animationend", (event) => {
+    if (event.target !== item) return;
+
     item.remove();
     moneyItems = moneyItems.filter((entry) => entry !== item);
-  }, { once: true });
+  });
 }
 
 function startMoneyAnimation() {
