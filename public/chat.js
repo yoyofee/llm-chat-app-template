@@ -811,6 +811,11 @@ function stopMoneyAnimation() {
 function updateMoneyAnimation() {
   if (!moneyStage) return;
 
+  if (!currentUser || chatView.classList.contains("hidden")) {
+    stopMoneyAnimation();
+    return;
+  }
+
   if (moneyPaused || document.hidden ||
       window.matchMedia("(max-width: 700px)").matches ||
       window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
