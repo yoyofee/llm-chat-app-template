@@ -262,8 +262,7 @@ background: var(--panel2);
   font-size: 12px;
 }
 
-/* 右侧聊天区域 */
-
+/* 聊天区域 */
 .chat-main {
   flex: 1;
   min-width: 0;
@@ -364,7 +363,9 @@ background: var(--panel2);
   padding: 10px;
 }
 
-.typing-indicator.visible { display: block; }
+.typing-indicator.visible {
+  display: block;
+}
 
 .notice {
   color: var(--muted);
@@ -373,25 +374,222 @@ background: var(--panel2);
   padding: 12px;
 }
 
-/* 小屏幕适配 */
+/* 电脑端人民币动画栏 */
+.money-panel {
+  width: 260px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  border-left: 1px solid var(--border);
+  background: var(--panel);
+  padding: 20px 12px;
+  text-align: center;
+}
 
+.money-title {
+  font-size: 17px;
+  font-weight: bold;
+  margin: 10px 0 22px;
+}
+
+.money-amount {
+  color: var(--accent);
+  font-size: 30px;
+  font-weight: bold;
+  animation: money-bounce 2.5s ease-in-out infinite;
+}
+
+@keyframes money-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.money-stage {
+  position: absolute;
+  inset: 120px 0 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.money-item {
+  position: absolute;
+  top: -70px;
+  animation: money-fall linear forwards;
+  user-select: none;
+  will-change: transform;
+}
+
+.money-bill {
+  font-size: 30px;
+  padding: 5px 10px;
+  color: #168653;
+  background: #d9f5df;
+  border: 1px solid #168653;
+  border-radius: 5px;
+}
+
+.money-coin {
+  font-size: 30px;
+  animation: coin-spin 1.4s linear infinite;
+}
+
+@keyframes money-fall {
+  from { transform: translateY(-80px) rotate(0deg); }
+  to { transform: translateY(700px) rotate(360deg); }
+}
+
+@keyframes coin-spin {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
+}
+
+.money-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 25px;
+  position: relative;
+  z-index: 2;
+}
+
+.money-controls select,
+.money-controls button {
+  width: 100%;
+  padding: 9px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel2);
+  color: var(--text);
+}
+
+/* 手机历史记录菜单 */
+.mobile-menu-button {
+  display: none;
+}
+
+.sidebar-overlay {
+  display: none;
+}
+
+/* 小屏幕：历史记录改为左侧抽屉 */
 @media (max-width: 700px) {
-  .topbar { padding: 0 10px; }
-  .top-actions { gap: 4px; }
-  .top-actions select { max-width: 90px; }
-  #account-label { display: none; }
-  .sidebar { width: 115px; padding: 10px 6px; }
-  .sidebar-title { padding: 18px 5px 8px; }
-  .history-item { padding: 9px 5px; }
-  .chat-container { padding: 12px 9px; }
-  .message { max-width: 95%; }
-  .small-button { padding: 7px 8px; }
+  #chat-view {
+    height: 100dvh;
+    min-height: 0;
+  }
+
+  .topbar {
+    height: 56px;
+    padding: 0 10px;
+  }
+
+  .mobile-menu-button {
+    display: inline-block;
+    margin-right: 8px;
+  }
+
+  .topbar-brand {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .topbar strong {
+    font-size: 17px;
+  }
+
+  .top-actions {
+    gap: 4px;
+  }
+
+  .top-actions select {
+    max-width: 85px;
+    padding: 6px 3px;
+    font-size: 12px;
+  }
+
+  #account-label {
+    display: none;
+  }
+
+  .money-panel {
+    display: none;
+  }
+
+  .sidebar {
+    position: fixed;
+    z-index: 30;
+    top: 56px;
+    bottom: 0;
+    left: 0;
+    width: min(280px, 82vw);
+    padding: 14px 12px;
+    transform: translateX(-105%);
+    transition: transform .25s ease;
+    box-shadow: 8px 0 25px #0003;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay.visible {
+    display: block;
+    position: fixed;
+    inset: 56px 0 0;
+    z-index: 20;
+    background: #0008;
+  }
+
+  .app-layout {
+    min-height: 0;
+  }
+
+  .chat-main {
+    width: 100%;
+  }
+
+  .chat-container {
+    padding: 10px 9px;
+  }
+
+  .message {
+    max-width: 95%;
+  }
+
+  .message-input {
+    padding: 8px;
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+
+  #user-input {
+    font-size: 16px;
+  }
+
+  .small-button {
+    padding: 7px 8px;
+  }
 }
 
 @media (max-width: 380px) {
-  .sidebar { width: 95px; }
-  .topbar strong { font-size: 16px; }
-  .top-actions select { max-width: 75px; }
+  .topbar strong {
+    font-size: 15px;
+  }
+
+  .top-actions select {
+    max-width: 72px;
+  }
+}
+
+/* 尊重系统减少动态效果设置 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 </style>
 </head>
