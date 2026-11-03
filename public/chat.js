@@ -421,6 +421,7 @@ $("logout-button").addEventListener("click", async () => {
   }
 
   currentUser = null;
+  stopMoneyAnimation();
   currentConversationId = null;
   chatHistory = [];
   conversations = [];
