@@ -548,6 +548,7 @@ async function sendMessage() {
 
     if (response.status === 401) {
       currentUser = null;
+      stopMoneyAnimation();
       showView(loginView);
       throw new Error("登录状态已失效，请重新登录");
     }
