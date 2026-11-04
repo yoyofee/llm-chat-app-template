@@ -179,7 +179,7 @@ async function handleAdminUserAction(
     const result = await env.DB.prepare(
       `UPDATE users
        SET password_hash=?, must_change_password=1
-       WHERE id=? AND role='member' AND disabled_at IS NULL`
+     WHERE id=? AND role='member'
     ).bind(await passwordHash(body.password), userId).run();
 
     if ((result.meta.changes ?? 0) !== 1) {
