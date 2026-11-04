@@ -199,7 +199,7 @@ async function handleAdminUserAction(
     }
 
     const result = await env.DB.prepare(
-      `UPDATE users SET disabled_at=?
+   UPDATE users SET disabled_at=? WHERE id=?
        WHERE id=? AND role='member'`
     ).bind(body.disabled ? new Date().toISOString() : null, userId).run();
 
