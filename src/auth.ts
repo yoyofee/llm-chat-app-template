@@ -177,10 +177,10 @@ async function handleAdminUserAction(
     }
 
     const result = await env.DB.prepare(
-      `UPDATE users
-       SET password_hash=?, must_change_password=1
-     WHERE id=? AND role='member'
-    ).bind(await passwordHash(body.password), userId).run();
+  `UPDATE users
+   SET password_hash=?, must_change_password=1
+   WHERE id=? AND role='member'`
+).bind(await passwordHash(body.password), userId).run();
 
     if ((result.meta.changes ?? 0) !== 1) {
       return json({ error: "成员不存在或账号已停用" }, 404);
